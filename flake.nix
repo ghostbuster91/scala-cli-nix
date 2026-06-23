@@ -60,6 +60,7 @@
               version = "fork-eb675f4";
               inherit src;
             });
+          hasFork = builtins.elem prev.stdenv.hostPlatform.system [ "x86_64-linux" "aarch64-darwin" ];
         in {
         scala-cli-nix = final.callPackage self.lib {
           scala-cli = prev.scala-cli;
@@ -73,6 +74,8 @@
 
         # scala-cli-nix CLI tool (init/lock), built by its own buildScalaCliApp.
         # Exposes both `scala-cli-nix` and the shorter `scn` alias.
+        # Only present on fork-supported systems (x86_64-linux, aarch64-darwin);
+        # absent on aarch64-linux and x86_64-darwin where no fork asset exists.
         #
         # The CLI shells out to `scala-cli` during `lock` / `init` (for
         # `list-targets` and `export --json`). We pass the path to a
@@ -84,7 +87,7 @@
         # `scala-cli-nix-cli-native-image` is the same CLI built as a GraalVM
         # native image (no JVM at runtime). Slower to build, much faster to
         # start.
-        inherit (
+      } // prev.lib.optionalAttrs hasFork (
           let
             wrapCli = name: base: final.symlinkJoin {
               inherit name;
@@ -111,8 +114,7 @@
             scala-cli-nix-cli-native-image = wrapCli "scala-cli-nix-native-image"
               (final.callPackage ./cli/derivation.nix { nativeImage = true; });
           }
-        ) scala-cli-nix-cli scala-cli-nix-cli-native-image;
-      };
+        );
       overlays.default = self.overlays.withConfig {};
 
       packages = forAllSystems (system:

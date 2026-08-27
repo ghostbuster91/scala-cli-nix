@@ -2,7 +2,7 @@
 
 scala-cli-nix.buildCoursierApp {
   pname = "metals";
-  version = "1.5.3";
+  version = "1.6.8";
   lockFile = ./scala.lock.json;
   # Metals' Java presentation compiler reaches into the internal
   # com.sun.tools.javac.* packages, which the module system closes off on
